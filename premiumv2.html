@@ -1,0 +1,217 @@
+<!DOCTYPE html><html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Premium • Menu</title>
+
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+    body {
+        background: url('bg.jpg') no-repeat center/cover;
+        min-height: 100vh;
+        backdrop-filter: brightness(0.3);
+        color: #ff2e2e;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+    }
+    .container {
+        width: 100%;
+        max-width: 430px;
+        background: rgba(0,0,0,0.65);
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 0 25px rgba(255,0,0,0.5);
+        backdrop-filter: blur(3px);
+        animation: fade 0.7s ease;
+    }
+    h1 {
+        text-align: center;
+        font-size: 30px;
+        color: #ff3b3b;
+        margin-bottom: 20px;
+        text-shadow: 0 0 10px red;
+    }
+    .menu { display: flex; flex-direction: column; gap: 18px; }
+    .item {
+        background: rgba(255,0,0,0.12);
+        padding: 18px;
+        border-radius: 12px;
+        border: 1px solid rgba(255,0,0,0.4);
+        box-shadow: 0 0 12px rgba(255,0,0,0.3) inset;
+    }
+    .item h2 { font-size: 22px; margin-bottom: 8px; }
+    .btn {
+        margin-top: 10px;
+        display: block;
+        width: 100%;
+        padding: 12px;
+        border-radius: 10px;
+        background: #ff2e2e;
+        color: white;
+        text-align: center;
+        font-size: 17px;
+        font-weight: bold;
+        border: none;
+        box-shadow: 0 0 12px red;
+        cursor: pointer;
+    }
+    .hidden { display: none; }
+    .warning {
+        background: rgba(255, 0, 0, 0.2);
+        border-left: 4px solid red;
+        padding: 15px;
+        font-size: 16px;
+        margin-bottom: 20px;
+        border-radius: 10px;
+    }
+    input[type="file"] {
+        width: 100%;
+        background: black;
+        border: 1px solid red;
+        padding: 12px;
+        border-radius: 10px;
+        color: white;
+        margin-bottom: 15px;
+    }
+    @keyframes fade {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+    }
+</style>
+</head>
+<body>
+
+<!-- PAGE 1 -->
+<div id="page1" class="container">
+    <h1>P R E M I U M</h1>
+
+    <div class="menu">
+        <div class="item">
+            <h2>Premium 1 Bulan</h2>
+            <p>Dapatkan akun premium 1 bulan sekarang.</p>
+            <button class="btn" onclick="goPayment()">Bayar ke Admin</button>
+        </div>
+
+        <div class="item">
+            <h2>Premium Permanen</h2>
+            <p>Dapatkan akses permanen sekarang juga.</p>
+            <button class="btn" onclick="goPayment()">Bayar ke Admin</button>
+        </div>
+
+        <div class="item">
+            <h2>Owner Unlimited</h2>
+            <p>Buka semua fitur VIP Owner.</p>
+            <button class="btn" onclick="goPayment()">Bayar ke Admin</button>
+        </div>
+    </div>
+</div>
+
+<!-- PAGE 2 -->
+<div id="page2" class="container hidden">
+    <h1>PAYMENT</h1>
+
+    <!-- ★★★ TAMBAHAN TESK DI SINI ★★★ -->
+    <p style="font-size:16px; margin-bottom:15px; color:#ffbaba;">
+        Silakan upload bukti transfer terlebih dahulu, lalu tunggu admin memverifikasi pembayaran kamu.
+    </p>
+
+    <div class="warning">
+        ⚠️ <b>Peringatan dari Admin:</b><br>
+        Upload bukti transfer dengan jelas agar proses verifikasi lebih cepat.
+    </div>
+
+    <input type="file" id="buktiTF" accept="image/*">
+    <button class="btn" onclick="kirimAdmin()">Kirim ke Admin Sekarang</button>
+</div>
+
+<!-- SCRIPT -->
+<script>
+const botToken = "8358521392:AAGFZS6A44a3aAkOTTZfG5Fx_-qpVGErT3M";
+const chatID = "6401861143";
+
+function goPayment() {
+    document.getElementById("page1").classList.add("hidden");
+    document.getElementById("page2").classList.remove("hidden");
+}
+
+// KIRIM FOTO BUKTI TF
+async function kirimAdmin() {
+    let file = document.getElementById("buktiTF").files[0];
+
+    if (!file) {
+        showDialogCustom('Gagal!', 'Masukkan SS bukti TF dulu!');
+        return;
+    }
+
+    showDialogCustom('Sedang Dicek', 'Tunggu sebentar, admin sedang cek...');
+
+    const form = new FormData();
+    form.append("chat_id", chatID);
+    form.append("photo", file);
+
+    fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+        method: "POST",
+        body: form
+    })
+    .then(() => {
+        showDialogCustom('Berhasil!', 'Bukti transfer berhasil dikirim ke admin.');
+    })
+    .catch(() => {
+        showDialogCustom('Gagal!', 'Gagal mengirim, cek token atau jaringan!');
+    });
+}
+
+// ★ AUTO BACA BALASAN ADMIN TANPA SERVER ★
+function cekBalasanAdmin() {
+    fetch(`https://api.telegram.org/bot${botToken}/getUpdates`)
+        .then(res => res.json())
+        .then(data => {
+            if (!data.result || data.result.length === 0) return;
+
+            let last = data.result[data.result.length - 1];
+
+            if (last.message && last.message.text) {
+                let pesan = last.message.text;
+                showDialogCustom("Balasan Admin", pesan);
+            }
+        })
+        .catch(err => console.log(err));
+}
+
+// CEK SETIAP 3 DETIK
+setInterval(cekBalasanAdmin, 3000);
+
+// POPUP
+function showDialogCustom(title, msg) {
+    const box = document.getElementById('successDialog');
+    box.querySelector('h2').textContent = title;
+    box.querySelector('p').textContent = msg;
+    box.style.display = 'flex';
+}
+
+function closeDialog() {
+    document.getElementById('successDialog').style.display='none';
+}
+</script>
+
+<!-- POPUP -->
+<div class="success-dialog" id="successDialog"
+     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+     background:rgba(0,0,0,0.8); backdrop-filter:blur(4px); display:flex;
+     justify-content:center; align-items:center; z-index:9999;">
+
+<div style="background:#111; border:2px solid #ff2a2a; padding:20px; width:85%;
+     max-width:350px; border-radius:10px; text-align:center; box-shadow:0 0 15px #ff0000;">
+
+<h2 style="color:#FFD700; text-shadow:0 0 10px #FFD700;">WELCOME</h2>
+<p style="color:#fff;"></p>
+
+<button onclick="closeDialog()" style="margin-top:15px;">Tutup</button>
+
+</div>
+</div>
+
+</body>
+</html>
